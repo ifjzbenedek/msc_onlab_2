@@ -1,0 +1,48 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- Környezeti változók, kulcsok ---
+.env
+.env.*
+!.env.example
+*.key
+
+# --- Szerkesztő, operációs rendszer ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Adatok ---
+# A kiértékelő tesztkészlet a felhasználási engedély szerint nem tehető
+# közzé, ezért sem az eredeti fájlok, sem a kérdésszöveget tartalmazó
+# származékok nem kerülhetnek a tárolóba. A minták kizárólag
+# azonosító-listaként (data/splits/) vannak verziókezelve.
+data/*
+!data/splits/
+hybrid_rag_qa_dataset/
+qa_*.json
+
+# --- Futási eredmények, naplók, modellek ---
+results/
+logs/
+*.log
+models/
+.cache/
+
+# --- Adatbázis ---
+pgdata/
+*.sqlite
+*.db
