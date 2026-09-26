@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from src.models.expected_chunk import ExpectedChunk
+from src.eval.schemas.expected_chunk import ExpectedChunk
 
 
 class QAItem(BaseModel):
