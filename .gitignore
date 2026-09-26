@@ -39,7 +39,7 @@ qa_*.json
 results/
 logs/
 *.log
-models/
+/models/
 .cache/
 
 # --- Adatbázis ---
