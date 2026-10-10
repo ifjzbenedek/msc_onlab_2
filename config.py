@@ -14,10 +14,14 @@ SOURCE_PDF_DIR = DATASET_DIR.joinpath("pdf")
 
 PREPARED_QA_PATH = DATA_DIR.joinpath("eval", "qa_retrieval.json")
 
+CHUNKS_PATH = DATA_DIR.joinpath("corpus", "chunks.json")
+
 SPLITS_DIR = DATA_DIR.joinpath("splits")
 DEV_IDS_PATH = SPLITS_DIR.joinpath("dev.txt")
 TEST_IDS_PATH = SPLITS_DIR.joinpath("test.txt")
 EXCLUDED_IDS_PATH = SPLITS_DIR.joinpath("excluded.txt")
+
+WEB_DIR = ROOT.joinpath("web", "dist")
 
 LLM_CLI = os.getenv("LLM_CLI", "")
 LLM_MODEL = os.getenv("LLM_MODEL", "")

@@ -3,8 +3,10 @@ from collections import defaultdict
 from pathlib import Path
 
 from src.eval.constants import (
+    AMENDMENT_QUESTION_PATTERN,
     COVER_AND_TOC_PAGES,
     DEV_QUESTIONS_PER_STRATUM,
+    DOCUMENTS_WITH_AMENDMENT_FOOTNOTES,
     SPLIT_SEED,
     TEST_QUESTIONS_PER_STRATUM,
 )
@@ -17,6 +19,15 @@ def comes_from_cover_or_toc(qa_item: QAItem) -> bool:
     cover_and_toc_pages = COVER_AND_TOC_PAGES.get(qa_item.source_document, set())
     item_pages = {page for chunk in qa_item.expected_chunks for page in chunk.spanned_pages}
     return item_pages <= cover_and_toc_pages
+
+
+def asks_about_amendment_footnotes(qa_item: QAItem) -> bool:
+    has_footnotes = qa_item.source_document in DOCUMENTS_WITH_AMENDMENT_FOOTNOTES
+    return has_footnotes and AMENDMENT_QUESTION_PATTERN.search(qa_item.question) is not None
+
+
+def is_excluded_from_samples(qa_item: QAItem) -> bool:
+    return comes_from_cover_or_toc(qa_item) or asks_about_amendment_footnotes(qa_item)
 
 
 def stratum_of(qa_item: QAItem) -> Stratum:
@@ -43,3 +54,7 @@ def draw_stratified_splits(qa_items: list[QAItem]) -> tuple[list[str], list[str]
 def save_id_list(ids: list[str], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(ids) + "\n", encoding="utf-8", newline="\n")
+
+
+def load_id_list(path: Path) -> list[str]:
+    return path.read_text(encoding="utf-8").split()

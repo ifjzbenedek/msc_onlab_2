@@ -1,3 +1,4 @@
+import re
 from collections import Counter
 
 from src.eval.constants import HYPHENATED_LINE_BREAK_PATTERN, WORD_PATTERN, WORDS_PER_NGRAM
@@ -5,9 +6,9 @@ from src.eval.constants import HYPHENATED_LINE_BREAK_PATTERN, WORD_PATTERN, WORD
 type Ngram = tuple[str, ...]
 
 
-def split_into_words(text: str) -> list[str]:
+def split_into_words(text: str, word_pattern: re.Pattern = WORD_PATTERN) -> list[str]:
     dehyphenated_text = HYPHENATED_LINE_BREAK_PATTERN.sub(r"\1\2", text)
-    return WORD_PATTERN.findall(dehyphenated_text.lower())
+    return word_pattern.findall(dehyphenated_text.lower())
 
 
 def build_ngrams(words: list[str], words_per_ngram: int = WORDS_PER_NGRAM) -> set[Ngram]:
@@ -15,9 +16,13 @@ def build_ngrams(words: list[str], words_per_ngram: int = WORDS_PER_NGRAM) -> se
     return {tuple(words[start:start + words_per_ngram]) for start in range(last_start + 1)}
 
 
-def find_boilerplate_ngrams(page_texts: list[str]) -> set[Ngram]:
+def find_boilerplate_ngrams(
+    page_texts: list[str], word_pattern: re.Pattern = WORD_PATTERN
+) -> set[Ngram]:
     page_count_per_ngram = Counter(
-        ngram for page_text in page_texts for ngram in build_ngrams(split_into_words(page_text))
+        ngram
+        for page_text in page_texts
+        for ngram in build_ngrams(split_into_words(page_text, word_pattern))
     )
     return {ngram for ngram, page_count in page_count_per_ngram.items() if page_count > 1}
 
