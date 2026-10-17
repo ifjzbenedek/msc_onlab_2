@@ -12,13 +12,16 @@ def build_corpus_ngrams(chunks: list[Chunk]) -> set[Ngram]:
     }
 
 
+def build_passage_ngrams(passage_text: str, ignored_ngrams: set[Ngram]) -> set[Ngram]:
+    return build_ngrams(split_into_words(passage_text, LETTER_WORD_PATTERN)) - ignored_ngrams
+
+
 def measure_corpus_coverage(
     qa_item: QAItem, corpus_ngrams: set[Ngram], ignored_ngrams: set[Ngram]
 ) -> float:
     best_coverage = 0.0
     for expected_chunk in qa_item.expected_chunks:
-        passage_words = split_into_words(expected_chunk.text, LETTER_WORD_PATTERN)
-        passage_ngrams = build_ngrams(passage_words) - ignored_ngrams
+        passage_ngrams = build_passage_ngrams(expected_chunk.text, ignored_ngrams)
         if passage_ngrams:
             best_coverage = max(best_coverage, len(passage_ngrams & corpus_ngrams) / len(passage_ngrams))
     return best_coverage

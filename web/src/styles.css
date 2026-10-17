@@ -291,6 +291,16 @@ input {
     background: var(--color-primary-soft);
 }
 
+.citation-label {
+    flex-shrink: 0;
+}
+
+.citation-title {
+    min-width: 0;
+    font-weight: 500;
+    color: var(--color-text-muted);
+}
+
 .citation-text {
     margin: 4px 14px 14px;
     padding: 2px 0 2px 14px;
@@ -359,11 +369,70 @@ input {
 }
 
 .message.error {
-    padding: 12px 16px;
+    padding: 16px 20px;
     border: 1px solid var(--color-error-border);
     border-radius: var(--radius-medium);
     background: var(--color-error-background);
+}
+
+.notice {
+    display: flex;
+    gap: 12px;
+}
+
+.notice > .icon {
+    width: 24px;
+    height: 24px;
+}
+
+.message.error .notice {
     color: var(--color-error-text);
+}
+
+.notice-title {
+    font-weight: 700;
+}
+
+.notice-detail {
+    margin-top: 2px;
+    color: var(--color-text);
+}
+
+.retry-button {
+    margin-top: 12px;
+    padding: 6px 16px;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+    color: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.retry-button:hover:not(:disabled) {
+    background: color-mix(in srgb, currentColor 8%, white);
+}
+
+.retry-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.banner-area {
+    padding: 16px var(--page-padding) 0;
+}
+
+.connection-banner {
+    max-width: calc(var(--content-width) - 2 * var(--page-padding));
+    margin: 0 auto;
+    padding: 14px 18px;
+    border: 1px solid var(--color-warning-border);
+    border-radius: var(--radius-medium);
+    background: var(--color-warning-background);
+    color: var(--color-warning-text);
+    animation: message-appear 0.25s ease-out;
 }
 
 .composer {

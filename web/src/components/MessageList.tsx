@@ -4,17 +4,21 @@ import { LOADING_MESSAGE } from "../constants";
 import type { ChatMessage } from "../types";
 import { AbstentionCard } from "./AbstentionCard";
 import { AnswerCard } from "./AnswerCard";
+import { ErrorCard } from "./ErrorCard";
 
 interface MessageListProps {
     messages: ChatMessage[];
     isWaiting: boolean;
+    onRetry: (question: string) => void;
 }
 
 interface MessageItemProps {
     message: ChatMessage;
+    isWaiting: boolean;
+    onRetry: (question: string) => void;
 }
 
-function MessageItem({ message }: MessageItemProps) {
+function MessageItem({ message, isWaiting, onRetry }: MessageItemProps) {
     switch (message.kind) {
         case "question":
             return <div className="message question">{message.text}</div>;
@@ -23,11 +27,11 @@ function MessageItem({ message }: MessageItemProps) {
                 ? <AbstentionCard answer={message.answer} />
                 : <AnswerCard answer={message.answer} />;
         case "error":
-            return <div className="message error">{message.text}</div>;
+            return <ErrorCard code={message.code} question={message.question} onRetry={onRetry} isWaiting={isWaiting} />;
     }
 }
 
-export function MessageList({ messages, isWaiting }: MessageListProps) {
+export function MessageList({ messages, isWaiting, onRetry }: MessageListProps) {
     const listEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -37,7 +41,7 @@ export function MessageList({ messages, isWaiting }: MessageListProps) {
     return (
         <div className="message-list" aria-live="polite">
             {messages.map((message, index) => (
-                <MessageItem key={index} message={message} />
+                <MessageItem key={index} message={message} isWaiting={isWaiting} onRetry={onRetry} />
             ))}
             {isWaiting && (
                 <div className="message loading">

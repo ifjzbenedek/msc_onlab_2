@@ -1,0 +1,5 @@
+USAGE_LIMIT_ERROR = "usage_limit"
+MODEL_LOGIN_ERROR = "model_login"
+MODEL_CALL_ERROR = "model_error"
+INVALID_QUESTION_ERROR = "invalid_question"
+INTERNAL_ERROR = "internal_error"

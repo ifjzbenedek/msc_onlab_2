@@ -1,6 +1,10 @@
+--extra-index-url https://download.pytorch.org/whl/cu126
 pydantic
 python-dotenv
 pymupdf
 pytest
 fastapi
 uvicorn
+rank-bm25
+torch
+sentence-transformers

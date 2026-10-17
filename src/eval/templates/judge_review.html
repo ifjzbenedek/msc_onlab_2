@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bíró ellenőrzése</title>
+<style>
+  :root {
+    --accent: #8a2432;
+    --accent-soft: #f6e9eb;
+    --bg: #f5f3f1;
+    --card: #ffffff;
+    --excerpt: #faf9f7;
+    --text: #1d1d1f;
+    --muted: #6b6b70;
+    --border: #e3dfdb;
+    --correct: #2e7d32;
+    --correct-soft: #e2f3e3;
+    --partial: #a86400;
+    --partial-soft: #fff0d3;
+    --incorrect: #c62828;
+    --incorrect-soft: #fde3e3;
+    --open: #ddd7d1;
+    --word: #fff5c4;
+    --number: #ffd29a;
+    --question-line: #6f9ff0;
+    --header-height: 120px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.6 "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05);
+  }
+  .bar, .navigator, main { max-width: 1480px; margin: 0 auto; padding-left: 20px; padding-right: 20px; }
+  .bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 10px; padding-bottom: 8px; }
+  .title { font-weight: 700; color: var(--accent); margin-right: auto; font-size: 16px; }
+  .progress-text { color: var(--muted); font-variant-numeric: tabular-nums; }
+  button {
+    font: inherit;
+    cursor: pointer;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    padding: 6px 12px;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .toggle { display: flex; align-items: center; gap: 6px; color: var(--muted); user-select: none; cursor: pointer; }
+  .navigator { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 10px; }
+  .navigator button {
+    width: 27px;
+    height: 27px;
+    padding: 0;
+    font-size: 11px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background: var(--open);
+    color: #4a4a4a;
+  }
+  .navigator button.correct { background: var(--correct); color: #fff; }
+  .navigator button.partially_correct { background: var(--partial); color: #fff; }
+  .navigator button.incorrect { background: var(--incorrect); color: #fff; }
+  .navigator button.current { border-color: var(--text); }
+  .progress { height: 4px; background: var(--open); }
+  .progress > div { height: 100%; width: 0; background: var(--accent); transition: width 0.25s; }
+  main { padding-top: 18px; padding-bottom: 48px; }
+  .done {
+    display: none;
+    margin-bottom: 14px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: var(--correct-soft);
+    color: var(--correct);
+    font-weight: 600;
+  }
+  .done.visible { display: block; }
+  .meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+  .chip { padding: 1px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .saved { color: var(--correct); }
+  .question { font-size: 18px; line-height: 1.45; font-weight: 600; margin: 0; }
+  .rubric-box summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-top: 8px; user-select: none; }
+  .grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 18px; align-items: start; }
+  .left {
+    position: sticky;
+    top: calc(var(--header-height) + 14px);
+    max-height: calc(100vh - var(--header-height) - 28px);
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .card h2 {
+    margin: 0 0 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .answer { white-space: pre-wrap; font-size: 16px; }
+  .verdicts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .verdicts button { padding: 12px 6px; font-weight: 700; border-width: 2px; background: var(--card); }
+  .verdicts button kbd { font-weight: 400; opacity: 0.75; margin-right: 4px; }
+  .verdicts .correct { color: var(--correct); border-color: var(--correct); }
+  .verdicts .partially_correct { color: var(--partial); border-color: var(--partial); }
+  .verdicts .incorrect { color: var(--incorrect); border-color: var(--incorrect); }
+  .verdicts .correct.selected { background: var(--correct); color: #fff; }
+  .verdicts .partially_correct.selected { background: var(--partial); color: #fff; }
+  .verdicts .incorrect.selected { background: var(--incorrect); color: #fff; }
+  textarea {
+    width: 100%;
+    min-height: 58px;
+    resize: vertical;
+    font: inherit;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .rubric { margin: 10px 0 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
+  .rubric li { margin: 2px 0; }
+  .rubric b { color: var(--text); }
+  .sources { display: flex; flex-direction: column; gap: 14px; }
+  .excerpt {
+    white-space: pre-wrap;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--border);
+    border-radius: 6px;
+    background: var(--excerpt);
+  }
+  .excerpt:last-child { margin-bottom: 0; }
+  .excerpt-head { white-space: normal; font-weight: 700; margin-bottom: 4px; }
+  .muted { color: var(--muted); margin: 0; }
+  .word-match { background: var(--word); border-radius: 3px; }
+  .q-word { box-shadow: inset 0 -2px 0 var(--question-line); }
+  .num-match { background: var(--number); font-weight: 700; border-radius: 3px; padding: 0 1px; }
+  .num-other { box-shadow: inset 0 -1px 0 #9a9a9a; }
+  .num-ok { background: var(--correct-soft); color: var(--correct); font-weight: 700; border-radius: 3px; padding: 0 2px; }
+  .num-missing {
+    background: var(--incorrect-soft);
+    color: var(--incorrect);
+    font-weight: 700;
+    border-radius: 3px;
+    padding: 0 2px;
+    text-decoration: underline wavy;
+  }
+  .num-badge { font-size: 10px; font-weight: 700; color: var(--partial); margin-left: 1px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--muted); }
+  .legend span span { padding: 0 4px; }
+  .help { color: var(--muted); font-size: 13px; margin-top: 18px; }
+  kbd {
+    display: inline-block;
+    min-width: 18px;
+    padding: 0 5px;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: var(--card);
+    font: 12px/18px ui-monospace, Consolas, monospace;
+    text-align: center;
+    color: var(--text);
+  }
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+    .left { position: static; max-height: none; }
+  }
+</style>
+</head>
+<body>
+<header id="header">
+  <div class="bar">
+    <div class="title">Bíró kézi ellenőrzése</div>
+    <span class="progress-text" id="progress-text"></span>
+    <button id="previous" title="Előző eset (←)">‹ Előző</button>
+    <button id="next" title="Következő eset (→)">Következő ›</button>
+    <button id="next-open" title="Következő kitöltetlen eset (N)">Következő kitöltetlen</button>
+    <label class="toggle"><input type="checkbox" id="highlight-toggle"> Kiemelés</label>
+    <button class="primary" id="export" title="Ítéletek mentése fájlba (Ctrl+S)">Exportálás</button>
+  </div>
+  <div class="navigator" id="navigator"></div>
+  <div class="progress"><div id="progress-bar"></div></div>
+</header>
+<main>
+  <div class="done" id="done">Mind az 50 eset kész. Mentsd az ítéleteket az Exportálás gombbal (vagy Ctrl+S).</div>
+  <div class="grid">
+    <div class="left">
+      <section class="card">
+        <div class="meta">
+          <span class="chip" id="case-id"></span>
+          <span id="case-kind"></span>
+          <span class="saved" id="saved"></span>
+        </div>
+        <h1 class="question" id="question"></h1>
+      </section>
+      <section class="card">
+        <h2>A rendszer válasza</h2>
+        <div class="answer" id="answer"></div>
+      </section>
+      <section class="card">
+        <h2>Az ítéleted</h2>
+        <div class="verdicts" id="verdicts"></div>
+        <textarea id="note" placeholder="Megjegyzés (nem kötelező)"></textarea>
+        <details class="rubric-box" id="rubric">
+          <summary>Szabályok</summary>
+          <ul class="rubric">
+            <li><b>Helyes:</b> a lényegi állítások egyeznek a forrással, és megválaszolják a kérdést.</li>
+            <li><b>Részben:</b> hiányzik egy lényeges elem, vagy kisebb pontatlanság van benne.</li>
+            <li><b>Helytelen:</b> téves, ellentmond a forrásnak, vagy nem a kérdésre felel.</li>
+            <li>A forrásban nem szereplő többletrészlet nem hiba, ha a hivatkozott részletek alátámasztják.</li>
+          </ul>
+        </details>
+      </section>
+      <div class="legend">
+        <span><span class="word-match">sárga</span> a válaszban is szereplő szó</span>
+        <span><span class="q-word">aláhúzott</span> a kérdés szava</span>
+        <span><span class="num-match">narancs</span> a válasz egyik száma</span>
+        <span><span class="num-ok">zöld</span> / <span class="num-missing">piros</span> a válasz száma megvan / nincs a forrásokban</span>
+      </div>
+    </div>
+    <div class="sources">
+      <section class="card">
+        <h2>Forrásszöveg – ebből készült a kérdés</h2>
+        <div id="source"></div>
+      </section>
+      <section class="card">
+        <h2>A válaszban hivatkozott részletek</h2>
+        <div id="cited"></div>
+      </section>
+    </div>
+  </div>
+  <p class="help">
+    <kbd>1</kbd> helyes · <kbd>2</kbd> részben · <kbd>3</kbd> helytelen, utána a következő kitöltetlen eset jön ·
+    <kbd>←</kbd> <kbd>→</kbd> lapozás · <kbd>N</kbd> következő kitöltetlen · <kbd>Ctrl</kbd>+<kbd>S</kbd> exportálás.
+    Minden ítélet azonnal mentődik a böngészőbe.
+  </p>
+</main>
+<script id="review-data" type="application/json">__REVIEW_DATA__</script>
+<script>
+  const CASES = JSON.parse(document.getElementById("review-data").textContent);
+  const REVIEW_KEY = "__REVIEW_KEY__";
+  const STORAGE_KEY = `judge-review-${REVIEW_KEY}`;
+  const EXPORT_FILE_NAME = "judge_review_verdicts.json";
+  const VERDICTS = [
+    { key: "correct", label: "Helyes", shortcut: "1" },
+    { key: "partially_correct", label: "Részben", shortcut: "2" },
+    { key: "incorrect", label: "Helytelen", shortcut: "3" },
+  ];
+  const AUTO_ADVANCE_MS = 250;
+  const SAVED_FLASH_MS = 1200;
+  const MIN_CONTENT_WORD_LENGTH = 5;
+  const WORD_PREFIX_LENGTH = 6;
+  const MAX_COMMON_WORD_SHARE = 0.15;
+  const TOKEN_PATTERN = /\p{L}+|\d+(?:[.,]\d+)?/gu;
+  const DIGIT_START = /^\d/;
+  const STOPWORDS = new Set([
+    "amely", "amelyek", "amelyet", "amelynek", "amelyben", "amelyre", "illetve", "valamint", "esetén",
+    "esetében", "szerint", "alapján", "továbbá", "akkor", "amennyiben", "kivéve", "között", "során",
+    "részére", "számára", "vagyis", "tehát", "lehet", "abban", "annak", "ennek", "ezért", "mivel",
+    "minden", "egyéb", "alatt", "felett", "nélkül", "szerinti", "vonatkozó", "which", "there", "their",
+    "about", "would", "should", "could", "under", "where", "after", "before", "other", "these", "those",
+  ]);
+  const TENS = [
+    ["tizen", 10], ["huszon", 20], ["harminc", 30], ["negyven", 40], ["ötven", 50],
+    ["hatvan", 60], ["hetven", 70], ["nyolcvan", 80], ["kilencven", 90],
+  ];
+  const UNITS = [
+    ["egy", 1], ["kettő", 2], ["két", 2], ["három", 3], ["négy", 4],
+    ["öt", 5], ["hat", 6], ["hét", 7], ["nyolc", 8], ["kilenc", 9],
+  ];
+  const ROUND_NUMBERS = [["tíz", 10], ["húsz", 20], ["száz", 100], ["ezer", 1000]];
+  const LONG_UNITS = [["kettő", 2], ["három", 3], ["négy", 4], ["nyolc", 8], ["kilenc", 9]];
+  const EXACT_UNITS = new Map([["két", 2], ["öt", 5]]);
+  const NOT_NUMBER_PREFIXES = ["százalék"];
+
+  const elements = Object.fromEntries(
+    ["header", "progress-text", "previous", "next", "next-open", "highlight-toggle", "export", "navigator",
+     "progress-bar", "done", "case-id", "case-kind", "saved", "question", "answer", "verdicts", "note",
+     "rubric", "source", "cited"].map((id) => [id, document.getElementById(id)])
+  );
+
+  function readState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (saved) return saved;
+    } catch (error) {}
+    return { verdicts: {}, notes: {}, position: 0, highlight: true, rubricOpen: true };
+  }
+
+  let state = readState();
+  let advanceTimer = null;
+  let savedTimer = null;
+
+  function writeState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      elements.saved.textContent = "✓ mentve";
+      clearTimeout(savedTimer);
+      savedTimer = setTimeout(() => { elements.saved.textContent = ""; }, SAVED_FLASH_MS);
+    } catch (error) {
+      elements.saved.textContent = "A böngésző nem enged menteni, exportálj gyakran!";
+    }
+  }
+
+  function escapeHtml(text) {
+    const replacements = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    return text.replace(/[&<>"']/g, (character) => replacements[character]);
+  }
+
+  function toPrefix(word) {
+    return word.toLowerCase().slice(0, WORD_PREFIX_LENGTH);
+  }
+
+  function parseNumberWord(word) {
+    const lowered = word.toLowerCase();
+    if (NOT_NUMBER_PREFIXES.some((prefix) => lowered.startsWith(prefix))) return null;
+    for (const [prefix, value] of TENS) {
+      if (lowered.startsWith(prefix)) {
+        const unit = UNITS.find(([unitWord]) => lowered.slice(prefix.length).startsWith(unitWord));
+        return value + (unit ? unit[1] : 0);
+      }
+    }
+    for (const [prefix, value] of [...ROUND_NUMBERS, ...LONG_UNITS]) {
+      if (lowered.startsWith(prefix)) return value;
+    }
+    return EXACT_UNITS.has(lowered) ? EXACT_UNITS.get(lowered) : null;
+  }
+
+  function readNumber(token) {
+    return DIGIT_START.test(token) ? Number(token.replace(",", ".")) : parseNumberWord(token);
+  }
+
+  function isParagraphMarker(text, index, token) {
+    return text[index - 1] === "(" && text[index + token.length] === ")";
+  }
+
+  function listTokens(text) {
+    return Array.from(text.matchAll(TOKEN_PATTERN), (match) => match[0]);
+  }
+
+  function listSourceTexts(reviewCase) {
+    return [...reviewCase.source, ...reviewCase.cited.map((excerpt) => `${excerpt.header}\n${excerpt.text}`)];
+  }
+
+  function findCommonPrefixes() {
+    const counts = new Map();
+    for (const reviewCase of CASES) {
+      const prefixes = new Set(
+        listTokens(listSourceTexts(reviewCase).join("\n"))
+          .filter((token) => !DIGIT_START.test(token) && token.length >= MIN_CONTENT_WORD_LENGTH)
+          .map(toPrefix)
+      );
+      prefixes.forEach((prefix) => counts.set(prefix, (counts.get(prefix) || 0) + 1));
+    }
+    const limit = CASES.length * MAX_COMMON_WORD_SHARE;
+    return new Set([...counts].filter(([, count]) => count > limit).map(([prefix]) => prefix));
+  }
+
+  const COMMON_PREFIXES = findCommonPrefixes();
+
+  function isContentWord(token) {
+    return (
+      readNumber(token) === null &&
+      token.length >= MIN_CONTENT_WORD_LENGTH &&
+      !STOPWORDS.has(token.toLowerCase()) &&
+      !COMMON_PREFIXES.has(toPrefix(token))
+    );
+  }
+
+  function collectNumbers(text) {
+    const numbers = new Set();
+    for (const match of text.matchAll(TOKEN_PATTERN)) {
+      const value = readNumber(match[0]);
+      if (value !== null && !isParagraphMarker(text, match.index, match[0])) numbers.add(value);
+    }
+    return numbers;
+  }
+
+  function collectPrefixes(text) {
+    return new Set(listTokens(text).filter(isContentWord).map(toPrefix));
+  }
+
+  function renderTokens(text, classify) {
+    let html = "";
+    let last = 0;
+    for (const match of text.matchAll(TOKEN_PATTERN)) {
+      const token = match[0];
+      const value = isParagraphMarker(text, match.index, token) ? null : readNumber(token);
+      const className = state.highlight && (value !== null || !DIGIT_START.test(token)) ? classify(token, value) : null;
+      const badge = state.highlight && value !== null && !DIGIT_START.test(token)
+        ? `<sup class="num-badge">${value}</sup>` : "";
+      html += escapeHtml(text.slice(last, match.index));
+      html += className ? `<span class="${className}">${escapeHtml(token)}</span>${badge}` : escapeHtml(token) + badge;
+      last = match.index + token.length;
+    }
+    return html + escapeHtml(text.slice(last));
+  }
+
+  function highlightAnswer(text, sourceNumbers) {
+    return renderTokens(text, (token, value) => {
+      if (value === null) return null;
+      return sourceNumbers.has(value) ? "num-ok" : "num-missing";
+    });
+  }
+
+  function highlightSource(text, marks) {
+    return renderTokens(text, (token, value) => {
+      if (value !== null) return marks.answerNumbers.has(value) ? "num-match" : "num-other";
+      if (!isContentWord(token)) return null;
+      const prefix = toPrefix(token);
+      const classes = [];
+      if (marks.answerPrefixes.has(prefix)) classes.push("word-match");
+      if (marks.questionPrefixes.has(prefix)) classes.push("q-word");
+      return classes.join(" ") || null;
+    });
+  }
+
+  function describeCase(reviewCase) {
+    const kind = reviewCase.group === "fulop" ? "Fülöp-kérdés" : "saját kérdés (B halmaz)";
+    const language = reviewCase.language === "en" ? "angol" : "magyar";
+    return `${kind} · ${language}`;
+  }
+
+  function countDone() {
+    return CASES.filter((reviewCase) => state.verdicts[reviewCase.id]).length;
+  }
+
+  function renderVerdictButtons(reviewCase) {
+    elements.verdicts.innerHTML = VERDICTS.map((verdict) => {
+      const selected = state.verdicts[reviewCase.id] === verdict.key ? " selected" : "";
+      return `<button class="${verdict.key}${selected}" data-verdict="${verdict.key}">` +
+        `<kbd>${verdict.shortcut}</kbd>${verdict.label}</button>`;
+    }).join("");
+  }
+
+  function renderNavigator() {
+    elements.navigator.innerHTML = CASES.map((reviewCase, position) => {
+      const verdict = state.verdicts[reviewCase.id] || "";
+      const current = position === state.position ? " current" : "";
+      return `<button class="${verdict}${current}" data-position="${position}" title="${reviewCase.id}">` +
+        `${position + 1}</button>`;
+    }).join("");
+  }
+
+  function renderProgress() {
+    const done = countDone();
+    elements["progress-text"].textContent = `${done} / ${CASES.length} kész`;
+    elements["progress-bar"].style.width = `${(100 * done) / CASES.length}%`;
+    elements.done.classList.toggle("visible", done === CASES.length);
+  }
+
+  function updateHeaderHeight() {
+    document.documentElement.style.setProperty("--header-height", `${elements.header.offsetHeight}px`);
+  }
+
+  function render() {
+    const reviewCase = CASES[state.position];
+    const marks = {
+      answerNumbers: collectNumbers(reviewCase.answer),
+      answerPrefixes: collectPrefixes(reviewCase.answer),
+      questionPrefixes: collectPrefixes(reviewCase.question),
+    };
+    const sourceNumbers = collectNumbers(listSourceTexts(reviewCase).join("\n"));
+    elements["case-id"].textContent = `${state.position + 1}. eset · ${reviewCase.id}`;
+    elements["case-kind"].textContent = describeCase(reviewCase);
+    elements.question.textContent = reviewCase.question;
+    elements.answer.innerHTML = highlightAnswer(reviewCase.answer, sourceNumbers);
+    elements.source.innerHTML = reviewCase.source
+      .map((text) => `<div class="excerpt">${highlightSource(text, marks)}</div>`)
+      .join("");
+    elements.cited.innerHTML = reviewCase.cited.length
+      ? reviewCase.cited.map((excerpt) =>
+          `<div class="excerpt"><div class="excerpt-head">${escapeHtml(excerpt.header)}</div>` +
+          `${highlightSource(excerpt.text, marks)}</div>`).join("")
+      : `<p class="muted">A válasz nem hivatkozott részletre.</p>`;
+    elements.note.value = state.notes[reviewCase.id] || "";
+    elements["highlight-toggle"].checked = state.highlight;
+    elements.rubric.open = state.rubricOpen !== false;
+    renderVerdictButtons(reviewCase);
+    renderNavigator();
+    renderProgress();
+    updateHeaderHeight();
+  }
+
+  function goTo(position) {
+    clearTimeout(advanceTimer);
+    state.position = Math.max(0, Math.min(CASES.length - 1, position));
+    writeState();
+    render();
+    window.scrollTo({ top: 0 });
+  }
+
+  function findNextOpen(from) {
+    for (let step = 1; step <= CASES.length; step += 1) {
+      const position = (from + step) % CASES.length;
+      if (!state.verdicts[CASES[position].id]) return position;
+    }
+    return null;
+  }
+
+  function chooseVerdict(verdictKey) {
+    state.verdicts[CASES[state.position].id] = verdictKey;
+    writeState();
+    render();
+    clearTimeout(advanceTimer);
+    const nextOpen = findNextOpen(state.position);
+    if (nextOpen !== null) advanceTimer = setTimeout(() => goTo(nextOpen), AUTO_ADVANCE_MS);
+  }
+
+  function exportVerdicts() {
+    const payload = {
+      review_key: REVIEW_KEY,
+      exported_at: new Date().toISOString(),
+      verdicts: state.verdicts,
+      notes: state.notes,
+    };
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
+    link.download = EXPORT_FILE_NAME;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  elements.previous.addEventListener("click", () => goTo(state.position - 1));
+  elements.next.addEventListener("click", () => goTo(state.position + 1));
+  elements["next-open"].addEventListener("click", () => {
+    const nextOpen = findNextOpen(state.position);
+    if (nextOpen !== null) goTo(nextOpen);
+  });
+  elements.export.addEventListener("click", exportVerdicts);
+  elements["highlight-toggle"].addEventListener("change", (event) => {
+    state.highlight = event.target.checked;
+    writeState();
+    render();
+  });
+  elements.verdicts.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-verdict]");
+    if (button) chooseVerdict(button.dataset.verdict);
+  });
+  elements.navigator.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-position]");
+    if (button) goTo(Number(button.dataset.position));
+  });
+  elements.rubric.addEventListener("toggle", () => {
+    if (state.rubricOpen === elements.rubric.open) return;
+    state.rubricOpen = elements.rubric.open;
+    writeState();
+  });
+  elements.note.addEventListener("input", () => {
+    state.notes[CASES[state.position].id] = elements.note.value;
+    writeState();
+  });
+  document.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+      event.preventDefault();
+      exportVerdicts();
+      return;
+    }
+    if (event.target.matches("textarea, input[type=text]")) {
+      if (event.key === "Escape") event.target.blur();
+      return;
+    }
+    const verdict = VERDICTS.find((candidate) => candidate.shortcut === event.key);
+    if (verdict) chooseVerdict(verdict.key);
+    else if (event.key === "ArrowRight") goTo(state.position + 1);
+    else if (event.key === "ArrowLeft") goTo(state.position - 1);
+    else if (event.key.toLowerCase() === "n") elements["next-open"].click();
+  });
+  window.addEventListener("resize", updateHeaderHeight);
+
+  state.position = Math.max(0, Math.min(CASES.length - 1, state.position || 0));
+  render();
+</script>
+</body>
+</html>

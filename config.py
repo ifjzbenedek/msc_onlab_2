@@ -15,6 +15,25 @@ SOURCE_PDF_DIR = DATASET_DIR.joinpath("pdf")
 PREPARED_QA_PATH = DATA_DIR.joinpath("eval", "qa_retrieval.json")
 
 CHUNKS_PATH = DATA_DIR.joinpath("corpus", "chunks.json")
+DENSE_INDEX_PATH = DATA_DIR.joinpath("index", "dense.npz")
+RERANK_SCORES_PATH = DATA_DIR.joinpath("cache", "rerank_scores.json")
+
+ANSWER_PROMPT_PATH = ROOT.joinpath("prompts", "answer_question.md")
+B_SET_PATH = DATA_DIR.joinpath("eval", "b_set.json")
+ANSWERS_DIR = DATA_DIR.joinpath("eval", "answers")
+JUDGE_PROMPT_PATH = ROOT.joinpath("prompts", "judge_answer.md")
+CRITIC_PROMPT_PATH = ROOT.joinpath("prompts", "critic_answer.md")
+JUDGE_REVIEW_PAGE_PATH = DATA_DIR.joinpath("eval", "judge_review.html")
+JUDGE_REVIEW_TEMPLATE_PATH = ROOT.joinpath("src", "eval", "templates", "judge_review.html")
+JUDGE_REVIEW_VERDICTS_PATH = Path.home().joinpath("Downloads", "judge_review_verdicts.json")
+
+
+def answers_path(system_name: str) -> Path:
+    return ANSWERS_DIR.joinpath(f"{system_name}.json")
+
+
+def judgments_path(system_name: str) -> Path:
+    return ANSWERS_DIR.joinpath(f"{system_name}_judgments.json")
 
 SPLITS_DIR = DATA_DIR.joinpath("splits")
 DEV_IDS_PATH = SPLITS_DIR.joinpath("dev.txt")

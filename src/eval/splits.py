@@ -7,6 +7,7 @@ from src.eval.constants import (
     COVER_AND_TOC_PAGES,
     DEV_QUESTIONS_PER_STRATUM,
     DOCUMENTS_WITH_AMENDMENT_FOOTNOTES,
+    EVALUATION_QUESTIONS_PER_STRATUM,
     SPLIT_SEED,
     TEST_QUESTIONS_PER_STRATUM,
 )
@@ -34,10 +35,15 @@ def stratum_of(qa_item: QAItem) -> Stratum:
     return qa_item.source_document, qa_item.difficulty
 
 
-def draw_stratified_splits(qa_items: list[QAItem]) -> tuple[list[str], list[str]]:
+def group_ids_by_stratum(qa_items: list[QAItem]) -> dict[Stratum, list[str]]:
     ids_by_stratum: defaultdict[Stratum, list[str]] = defaultdict(list)
     for qa_item in qa_items:
         ids_by_stratum[stratum_of(qa_item)].append(qa_item.id)
+    return ids_by_stratum
+
+
+def draw_stratified_splits(qa_items: list[QAItem]) -> tuple[list[str], list[str]]:
+    ids_by_stratum = group_ids_by_stratum(qa_items)
     dev_end = DEV_QUESTIONS_PER_STRATUM
     test_end = dev_end + TEST_QUESTIONS_PER_STRATUM
     random_generator = random.Random(SPLIT_SEED)
@@ -49,6 +55,15 @@ def draw_stratified_splits(qa_items: list[QAItem]) -> tuple[list[str], list[str]
         dev_ids += shuffled_ids[:dev_end]
         test_ids += shuffled_ids[dev_end:test_end]
     return sorted(dev_ids), sorted(test_ids)
+
+
+def draw_evaluation_subset(test_items: list[QAItem]) -> list[str]:
+    ids_by_stratum = group_ids_by_stratum(test_items)
+    random_generator = random.Random(SPLIT_SEED)
+    subset_ids: list[str] = []
+    for stratum in sorted(ids_by_stratum):
+        subset_ids += random_generator.sample(sorted(ids_by_stratum[stratum]), EVALUATION_QUESTIONS_PER_STRATUM)
+    return sorted(subset_ids)
 
 
 def save_id_list(ids: list[str], path: Path) -> None:

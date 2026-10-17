@@ -1,15 +1,25 @@
 import { useState } from "react";
 
-import { fetchAnswer } from "./api";
+import { AskError, fetchAnswer } from "./api";
+import { ConnectionBanner } from "./components/ConnectionBanner";
 import { MessageList } from "./components/MessageList";
 import { QuestionForm } from "./components/QuestionForm";
 import { WelcomePanel } from "./components/WelcomePanel";
-import { BRAND_MARK, DISCLAIMER_TEXT, ERROR_MESSAGE, PAGE_SUBTITLE, PAGE_TITLE } from "./constants";
+import {
+    BRAND_MARK,
+    DISCLAIMER_TEXT,
+    INTERNAL_ERROR,
+    PAGE_SUBTITLE,
+    PAGE_TITLE,
+    SERVER_UNREACHABLE_ERROR,
+} from "./constants";
+import { useBackendStatus } from "./hooks/useBackendStatus";
 import type { ChatMessage } from "./types";
 
 export function App() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isWaiting, setIsWaiting] = useState(false);
+    const [isBackendReachable, setIsBackendReachable] = useBackendStatus();
 
     function addMessage(message: ChatMessage) {
         setMessages((previousMessages) => [...previousMessages, message]);
@@ -20,9 +30,14 @@ export function App() {
         setIsWaiting(true);
         try {
             addMessage({ kind: "answer", answer: await fetchAnswer(question) });
+            setIsBackendReachable(true);
         } catch (error) {
             console.error(error);
-            addMessage({ kind: "error", text: ERROR_MESSAGE });
+            const code = error instanceof AskError ? error.code : INTERNAL_ERROR;
+            addMessage({ kind: "error", code, question });
+            if (code === SERVER_UNREACHABLE_ERROR) {
+                setIsBackendReachable(false);
+            }
         } finally {
             setIsWaiting(false);
         }
@@ -39,10 +54,11 @@ export function App() {
                     </div>
                 </div>
             </header>
+            {!isBackendReachable && <ConnectionBanner />}
             <main className="chat">
                 {messages.length === 0
                     ? <WelcomePanel onAsk={askQuestion} />
-                    : <MessageList messages={messages} isWaiting={isWaiting} />}
+                    : <MessageList messages={messages} isWaiting={isWaiting} onRetry={askQuestion} />}
             </main>
             <footer className="composer">
                 <QuestionForm onAsk={askQuestion} isWaiting={isWaiting} />

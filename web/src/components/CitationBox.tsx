@@ -12,7 +12,10 @@ function formatCitationLabel(citation: Citation) {
 export function CitationBox({ citation }: CitationBoxProps) {
     return (
         <details className="citation">
-            <summary>{formatCitationLabel(citation)}</summary>
+            <summary>
+                <span className="citation-label">{formatCitationLabel(citation)}</span>
+                {citation.title && <span className="citation-title">{citation.title}</span>}
+            </summary>
             <p className="citation-text">{citation.text}</p>
         </details>
     );
