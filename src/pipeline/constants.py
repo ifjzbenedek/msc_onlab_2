@@ -1,8 +1,13 @@
+import re
+
 from src.retrieval.constants import RERANK_CANDIDATE_COUNT
 
 ANSWER_CONTEXT_CHUNK_COUNT = 3
+RETRY_CONTEXT_CHUNK_COUNT = 5
+RETRIED_ANSWER_ATTEMPTS = 2
 LLM_CALLS_PER_ANSWER = 1
 LLM_CALLS_PER_CRITIC = 1
+LLM_CALLS_PER_TRANSLATION = 1
 HIGH_RELIABILITY = "high"
 MEDIUM_RELIABILITY = "medium"
 HIGH_RELIABILITY_MIN_CONFIDENCE = 0.5
@@ -44,5 +49,27 @@ ANSWER_SCHEMA = {
         "cited_chunk_ids": {"type": "array", "items": {"type": "string"}},
     },
     "required": ["answerable", "answer", "cited_chunk_ids"],
+    "additionalProperties": False,
+}
+
+QUESTION_WORD_PATTERN = re.compile(r"[^\W\d_]+")
+HUNGARIAN_FUNCTION_WORDS = frozenset({
+    "az", "és", "hogy", "nem", "ha", "van", "vagy", "kell", "meg", "még", "egy", "de", "mi", "mikor", "hogyan",
+    "hány", "hany", "mennyi", "mennyit", "milyen", "melyik", "miért", "miert", "ezt", "azt", "már", "mar", "csak",
+    "én", "nekem", "lehet", "akkor", "amikor", "ami", "amit", "ez", "vagyok", "voltam", "szerint", "után", "utan",
+    "kérdés", "kerdes", "tudok", "tudom", "ki",
+})
+FOREIGN_FUNCTION_WORDS = frozenset({
+    "the", "what", "how", "can", "my", "i", "do", "does", "of", "to", "for", "and", "with", "if", "this", "that",
+    "have", "are", "will", "should", "there", "when", "which", "who", "me", "you", "your", "it", "in", "an",
+    "der", "die", "das", "dem", "den", "und", "ist", "ich", "nicht", "wie", "was", "wer", "kann", "darf", "man",
+    "gibt", "ein", "eine", "einen", "einem", "bei", "für", "mein", "meine", "wenn", "oder", "zu", "im", "auf",
+    "mich", "mir", "habe", "muss", "werden", "als", "auch", "nach", "von", "sich", "welche", "welcher", "welchem",
+    "wo",
+})
+TRANSLATION_SCHEMA = {
+    "type": "object",
+    "properties": {"translation": {"type": "string"}},
+    "required": ["translation"],
     "additionalProperties": False,
 }

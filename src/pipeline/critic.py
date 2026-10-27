@@ -23,7 +23,7 @@ def answer_with_critic(
     system: RetrievalSystem, question: str, answer_prompt_path: Path, critic_prompt_path: Path
 ) -> GeneratedAnswer:
     generated = answer_with_crag(system, question, answer_prompt_path)
-    if not generated.answerable or not generated.cited_chunk_ids:
+    if not generated.has_cited_answer():
         return generated
     chunks_by_id = {chunk.id: chunk for chunk in system.chunks}
     cited_chunks = [chunks_by_id[chunk_id] for chunk_id in generated.cited_chunk_ids]

@@ -12,6 +12,7 @@ from src.pipeline.answer_file import load_answers, save_answers
 from src.pipeline.baseline import generate_answer
 from src.pipeline.crag import answer_with_crag
 from src.pipeline.critic import answer_with_critic
+from src.pipeline.llm_crag import answer_with_llm_crag
 from src.retrieval.reranker import save_new_scores
 from src.retrieval.system import load_retrieval_system
 
@@ -22,6 +23,11 @@ ANSWER_FUNCTIONS = {
         answer_with_critic,
         answer_prompt_path=config.ANSWER_PROMPT_PATH,
         critic_prompt_path=config.CRITIC_PROMPT_PATH,
+    ),
+    "llm_crag": partial(
+        answer_with_llm_crag,
+        answer_prompt_path=config.ANSWER_PROMPT_PATH,
+        translate_prompt_path=config.TRANSLATE_PROMPT_PATH,
     ),
 }
 

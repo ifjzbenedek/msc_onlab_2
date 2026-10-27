@@ -26,10 +26,14 @@ def build_answer_prompt(question: str, chunks: list[Chunk]) -> str:
     return ANSWER_USER_PROMPT_TEMPLATE.format(question=question, context=format_context(chunks))
 
 
-def answer_from_chunks(
-    question: str, ranked: list[tuple[Chunk, float]], retrieval_seconds: float, prompt_path: Path
+def answer_from_context(
+    question: str,
+    context: list[tuple[Chunk, float]],
+    ranked: list[tuple[Chunk, float]],
+    retrieval_seconds: float,
+    prompt_path: Path,
 ) -> GeneratedAnswer:
-    context_chunks = [chunk for chunk, _ in ranked[:ANSWER_CONTEXT_CHUNK_COUNT]]
+    context_chunks = [chunk for chunk, _ in context]
     response, _ = ask_model_cached_with_usage(prompt_path, build_answer_prompt(question, context_chunks), ANSWER_SCHEMA)
     context_ids = {chunk.id for chunk in context_chunks}
     return GeneratedAnswer(
@@ -43,7 +47,26 @@ def answer_from_chunks(
         input_tokens=response.input_tokens,
         output_tokens=response.output_tokens,
         llm_seconds=response.seconds,
-        confidence=ranked[0][1] if ranked else 0.0,
+        confidence=context[0][1] if context else 0.0,
+    )
+
+
+def answer_from_chunks(
+    question: str, ranked: list[tuple[Chunk, float]], retrieval_seconds: float, prompt_path: Path
+) -> GeneratedAnswer:
+    return answer_from_context(question, ranked[:ANSWER_CONTEXT_CHUNK_COUNT], ranked, retrieval_seconds, prompt_path)
+
+
+def add_model_costs(
+    generated: GeneratedAnswer, llm_calls: int, input_tokens: int, output_tokens: int, llm_seconds: float
+) -> GeneratedAnswer:
+    return generated.model_copy(
+        update={
+            "llm_calls": generated.llm_calls + llm_calls,
+            "input_tokens": generated.input_tokens + input_tokens,
+            "output_tokens": generated.output_tokens + output_tokens,
+            "llm_seconds": generated.llm_seconds + llm_seconds,
+        }
     )
 
 

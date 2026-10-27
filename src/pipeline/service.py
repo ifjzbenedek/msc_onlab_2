@@ -52,7 +52,7 @@ def find_related_chunk_ids(generated: GeneratedAnswer) -> list[str]:
 
 
 def to_api_answer(system: RetrievalSystem, generated: GeneratedAnswer) -> Answer:
-    if not generated.answerable or not generated.cited_chunk_ids:
+    if not generated.has_cited_answer():
         return Answer(abstained=True, citations=build_citations(system, find_related_chunk_ids(generated)))
     reliability = HIGH_RELIABILITY if generated.confidence >= HIGH_RELIABILITY_MIN_CONFIDENCE else MEDIUM_RELIABILITY
     return Answer(

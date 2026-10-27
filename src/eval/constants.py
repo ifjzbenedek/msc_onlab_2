@@ -16,7 +16,7 @@ CRAG_THRESHOLD_GRID = (0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9)
 CRAG_TUNING_STYLES = RERANKED_EVALUATION_STYLES
 CRAG_EXPANSION_BANDS = ((0.0, 0.01), (0.01, 0.05), (0.05, 0.2), (0.2, 0.5))
 ANSWER_CONTEXT_CUTOFF = 3
-SYSTEM_NAMES = ("baseline", "crag", "full")
+SYSTEM_NAMES = ("baseline", "crag", "full", "llm_crag")
 
 JUDGE_USER_PROMPT_TEMPLATE = (
     "Kérdés:\n{question}\n\nForrásszöveg:\n{source}\n\nA rendszer válasza:\n{answer}"

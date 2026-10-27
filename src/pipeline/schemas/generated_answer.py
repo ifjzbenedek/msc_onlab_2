@@ -18,3 +18,8 @@ class GeneratedAnswer(BaseModel):
     crag_decision: str | None = None
     expansions: int = 0
     critic_support: str | None = None
+    answer_attempts: int = 1
+    search_question: str | None = None
+
+    def has_cited_answer(self) -> bool:
+        return self.answerable and bool(self.cited_chunk_ids)

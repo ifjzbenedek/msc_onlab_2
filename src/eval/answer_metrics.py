@@ -20,7 +20,7 @@ type CitationCheck = Callable[[str, GeneratedAnswer, EvaluationContext], bool]
 
 
 def is_answered(generated: GeneratedAnswer) -> bool:
-    return generated.answerable and bool(generated.cited_chunk_ids)
+    return generated.has_cited_answer()
 
 
 def is_answerable_question(question_id: str, context: EvaluationContext) -> bool:

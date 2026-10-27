@@ -53,7 +53,7 @@ python scripts\evaluate_retrieval.py
 python scripts\tune_crag_thresholds.py
 ```
 
-Válaszadás és LLM-bíró rendszerenként (`baseline`, `crag`, `full`), a végén az összesítés. A
+Válaszadás és LLM-bíró rendszerenként (`baseline`, `crag`, `full`, `llm_crag`), a végén az összesítés. A
 `warm_rerank_cache.py` előre kiszámolja a keresési pontszámokat a videokártyán, utána a válaszadás
 `CUDA_VISIBLE_DEVICES=-1` mellett is gyors.
 
